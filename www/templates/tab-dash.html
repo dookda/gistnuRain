@@ -1,0 +1,12 @@
+<ion-view view-title="แผนที่น้ำฝน">
+
+  <ion-nav-buttons side="secondary">
+  <button class="button button-icon ion-search"  ng-click="openModal()">
+    <span class="share-button"></span>
+  </button>
+</ion-nav-buttons>
+
+  <ion-content class="map">
+    <leaflet lf-center="center" layers="layers" width="100%" height="100%"></leaflet>
+  </ion-content>
+</ion-view>
