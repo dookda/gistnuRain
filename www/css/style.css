@@ -16,3 +16,7 @@ body {
 .map{
     padding: 0;
 }
+.echarts{
+    padding: 0px;
+    height: 300px;
+}

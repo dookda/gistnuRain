@@ -1,11 +1,11 @@
-angular.module('starter.controllers', ['ui-leaflet'])
+angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
 
-  .controller('DashCtrl', function ($scope, $ionicModal, $http, $timeout, leafletData, PlaceService) {
+  .controller('DashCtrl', function ($scope, $ionicModal, $cordovaGeolocation, $http, $timeout, leafletData, PlaceService) {
     angular.extend($scope, {
       center: {
-        lat: 15.026,
-        lng: 100.260,
-        zoom: 6
+        lat: 16.426,
+        lng: 99.760,
+        zoom: 7
       },
       markers: {
         taipei: {
@@ -57,10 +57,10 @@ angular.module('starter.controllers', ['ui-leaflet'])
             visible: false,
             url: "http://idpgis.ncep.noaa.gov/arcgis/services/NWS_Observations/radar_base_reflectivity/MapServer/WmsServer",
             layerOptions: {
-					            layers: [1],
-				                opacity: 1,
-				                attribution: "Copyright:© 2014 Esri, DeLorme, HERE, TomTom"
-					        },
+              layers: [1],
+              opacity: 1,
+              attribution: "Copyright:© 2014 Esri, DeLorme, HERE, TomTom"
+            },
             zIndex: 1
           },
 
@@ -70,10 +70,10 @@ angular.module('starter.controllers', ['ui-leaflet'])
             visible: false,
             url: "http://idpgis.ncep.noaa.gov/arcgis/services/NWS_Climate_Outlooks/cpc_6_10_day_outlk/MapServer/WmsServer",
             layerOptions: {
-					            layers: [1],
-				                opacity: 1,
-				                attribution: "Copyright:© 2014 Esri, DeLorme, HERE, TomTom"
-					        },
+              layers: [1],
+              opacity: 1,
+              attribution: "Copyright:© 2014 Esri, DeLorme, HERE, TomTom"
+            },
             zIndex: 1
           },
 
@@ -83,10 +83,10 @@ angular.module('starter.controllers', ['ui-leaflet'])
             visible: false,
             url: "ionic",
             layerOptions: {
-					            layers: [0],
-				                opacity: 1,
-				                attribution: "Copyright:© 2014 Esri, DeLorme, HERE, TomTom"
-					        },
+              layers: [0],
+              opacity: 1,
+              attribution: "Copyright:© 2014 Esri, DeLorme, HERE, TomTom"
+            },
             zIndex: 1
           },
 
@@ -163,6 +163,37 @@ angular.module('starter.controllers', ['ui-leaflet'])
       });
     });
 
+    // get lat lon
+    leafletData.getMap().then(function (map) {
+      map.on('click', function (e) {
+        console.log("Latitude : " + e.latlng.lat + " Longitude :  " + e.latlng.lng);
+      });
+    });
+
+    // geolocation
+    $scope.locate = function () {
+      $cordovaGeolocation
+        .getCurrentPosition()
+        .then(function (position) {
+          $scope.center.lat = position.coords.latitude;
+          $scope.center.lng = position.coords.longitude;
+          $scope.center.zoom = 15;
+
+          $scope.markers.now = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            message: "You Are Here",
+            focus: true,
+            draggable: true
+          };
+
+        }, function (err) {
+          // error
+          console.log("Location error!");
+          console.log(err);
+        });
+    };
+
     // modal
     $ionicModal.fromTemplateUrl('templates/modal.html', {
       scope: $scope,
@@ -229,23 +260,22 @@ angular.module('starter.controllers', ['ui-leaflet'])
 
     $scope.getVillLocation = function () {
       //$scope.featureSelection('alr:ln9p_vill', 'vill_code', $scope.dat.vill);
-      //$scope.findLocation("village", $scope.dat.vill);
-      $scope.changeLocation('36.8899:-121.8008:12');
-      console.log($scope.dat.vill);
+      $scope.findLocation("village", $scope.dat.vill);
+      //$scope.changeLocation('36.8899:-121.8008:12');
+      //console.log($scope.dat.vill);
     };
 
 
     $scope.findLocation = function (xplace, xcode) {
       PlaceService.getLocation(xplace, xcode)
         .then(function (response) {
-          $scope.center = {
-            lat: response.data[0].c_y,
-            lng: response.data[0].c_x,
-            zoom: 22
-          };
 
-
-          console.log(response.data[0].vill_code);
+          $timeout(function () {
+            $scope.center.lat = response.data[0].c_x;
+            $scope.center.lng = response.data[0].c_y;
+            $scope.center.zoom = 22;
+          }, 1600);
+          
 
         })
       // $scope.init();
@@ -301,10 +331,6 @@ angular.module('starter.controllers', ['ui-leaflet'])
     };
 
 
-
-
-
-
   }) // end controller
 
   .controller('ChatsCtrl', function ($scope, Chats) {
@@ -326,8 +352,194 @@ angular.module('starter.controllers', ['ui-leaflet'])
     $scope.chat = Chats.get($stateParams.chatId);
   })
 
-  .controller('AccountCtrl', function ($scope) {
+
+  .controller('StatCtrl', function ($scope, $interval, $timeout, ChartService) {
+
     $scope.settings = {
       enableFriends: true
     };
+
+    // load rain data
+    $scope.rainNow = [];
+    $scope.rain30y = [];
+    $scope.chartSer = [];
+
+    $scope.loadRain = function (place, code) {
+      // load rain now
+      ChartService.loadRNow(place, code)
+        .success(function (data) {
+          for (var prop in data[0]) {
+            for (var i = 1; i <= 52; i++) {
+              var w = 'w' + i;
+              if (prop == w) {
+
+                $scope.chartSer.push(prop);
+
+                if (Number(data[0][prop]) >= 0) {
+                  $scope.rainNow.push((Number(data[0][prop])).toFixed(2));
+                  //console.log('ok');
+                } else {
+                  $scope.rainNow.push(null);
+                  //console.log('null')
+                }
+              }
+            }
+          }
+        })
+        .error(function (error) {
+          console.error("error");
+        });
+
+      ChartService.loadR30y(place, code)
+        .success(function (data) {
+          for (var prop in data[0]) {
+            for (var i = 1; i <= 52; i++) {
+              var w = 'w' + i;
+              if (prop == w) {
+                if (Number(data[0][prop]) >= 0) {
+                  $scope.rain30y.push((Number(data[0][prop])).toFixed(2));
+                  //console.log('ok');
+                } else {
+                  $scope.rain30y.push(null);
+                  //console.log('null')
+                }
+              }
+            }
+          }
+        })
+        .error(function (error) {
+          console.error("error");
+        });
+
+      //console.log($scope.rainNow);
+      //console.log($scope.rain30y);
+      //console.log($scope.chartSer);
+    };
+
+    $scope.loadRain('province', '53');
+
+
+
+    //ng-echarts
+    function onClick(params) {
+      console.log(params);
+    };
+
+    $scope.lineConfig = {
+      theme: 'default',
+      event: [{ click: onClick }],
+      dataLoaded: true
+    };
+
+    $scope.lineOption = {
+      title: {
+        text: 'title',
+        subtext: 'subtext'
+      },
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow'
+        }
+      },
+      legend: {
+        data: ['series1', 'series2']
+      },
+      toolbox: {
+        show: true,
+        feature: {
+          mark: { show: true },
+          // dataView: { show: true, readOnly: false },
+          magicType: { show: true, type: ['line', 'bar'] },
+          restore: { show: true },
+          // saveAsImage: { show: true }
+        }
+      },
+      calculable: true,
+      xAxis: [
+        {
+          type: 'category',
+          boundaryGap: false,
+          data: $scope.chartSer, //['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        }
+      ],
+      yAxis: [
+        {
+          type: 'value',
+          axisLabel: {
+            //formatter: '{value} °C'
+          }
+        }
+      ],
+      series: [
+        {
+          name: 'series1',
+          type: 'line',
+          data: $scope.rainNow,  //[11, 11, 15, 13, 12, 13, 10],
+          markPoint: {
+            data: [
+              { type: 'max', name: 'max' },
+              { type: 'min', name: 'min' }
+            ]
+          },
+          markLine: {
+            data: [
+              { type: 'average', name: 'average' }
+            ]
+          }
+        },
+        {
+          name: 'series2',
+          type: 'line',
+          data: $scope.rain30y, //[1, -2, 2, 5, 3, 2, 0],
+          markPoint: {
+            data: [
+              { name: 'name sr2', value: -2, xAxis: 1, yAxis: -1.5 }
+            ]
+          },
+          markLine: {
+            data: [
+              { type: 'average', name: 'av' }
+            ]
+          }
+        }
+
+        // {
+        //   name: '访问来源',
+        //   type: 'pie',
+        //   radius: '55%',
+        //   data: [
+        //     { value: 235, name: '视频广告' },
+        //     { value: 274, name: '联盟广告' },
+        //     { value: 310, name: '邮件营销' },
+        //     { value: 335, name: '直接访问' },
+        //     { value: 400, name: '搜索引擎' }
+        //   ],
+        //   roseType: 'angle',
+        //   label: {
+        //     normal: {
+        //       textStyle: {
+        //         color: 'rgba(255, 255, 255, 0.3)'
+        //       }
+        //     }
+        //   },
+        //   labelLine: {
+        //     normal: {
+        //       lineStyle: {
+        //         color: 'rgba(255, 255, 255, 0.3)'
+        //       }
+        //     }
+        //   },
+        //   itemStyle: {
+        //     normal: {
+        //       color: '#c23531',
+        //       shadowBlur: 200,
+        //       shadowColor: 'rgba(0, 0, 0, 0.5)'
+        //     }
+        //   }
+        // }
+      ]
+    };
+
+
   });
