@@ -1,6 +1,6 @@
 angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
 
-  .controller('DashCtrl', function ($scope, $ionicModal, $cordovaGeolocation, $http, $timeout, leafletData, PlaceService) {
+  .controller('MapCtrl', function ($scope, $ionicModal, $cordovaGeolocation, $http, $timeout, leafletData, PlaceService) {
     angular.extend($scope, {
       center: {
         lat: 16.426,
@@ -117,7 +117,7 @@ angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
           amphoe: {
             name: 'ขอบเขตอำเภอ',
             type: 'wms',
-            visible: false,
+            visible: true,
             url: 'http://map.nu.ac.th/gs-alr2/ows?',
             layerParams: {
               layers: 'alr:ln9p_amp',
@@ -129,7 +129,7 @@ angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
           tambon: {
             name: 'ขอบเขตตำบล',
             type: 'wms',
-            visible: false,
+            visible: true,
             url: 'http://map.nu.ac.th/gs-alr2/ows?',
             layerParams: {
               layers: 'alr:ln9p_tam',
@@ -258,29 +258,198 @@ angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
       // $scope.findLocation("tambon", $scope.dat.tam);
     };
 
-    $scope.getVillLocation = function () {
-      //$scope.featureSelection('alr:ln9p_vill', 'vill_code', $scope.dat.vill);
-      $scope.findLocation("village", $scope.dat.vill);
-      //$scope.changeLocation('36.8899:-121.8008:12');
-      //console.log($scope.dat.vill);
+    //update select feature
+    $scope.centerJSON = function () {
+      leafletData.getMap().then(function (map) {
+        var latlngs = [];
+        for (var i in $scope.geojson.data.features[0].geometry.coordinates) {
+          var coord = $scope.geojson.data.features[0].geometry.coordinates[i];
+          for (var j in coord) {
+            var points = coord[j];
+            for (var k in points) {
+              latlngs.push(L.GeoJSON.coordsToLatLng(points[k]));
+            }
+          }
+        }
+        map.fitBounds(latlngs);
+      });
+    };
+
+    $scope.featureSelection = function (layer, field, code) {
+      $http.get('http://map.nu.ac.th/gs-alr2/ows?' +
+        'service=WFS&version=1.0.0' +
+        '&request=GetFeature' +
+        '&typeName=' + layer +
+        '&CQL_FILTER=' + field + '=%27' + code + '%27' +
+        '&outputFormat=application%2Fjson')
+        .then(function (data, status) {
+          angular.extend($scope, {
+            geojson: {
+              data: data.data,
+              style: {
+                fillColor: "red",
+                weight: 2,
+                opacity: 1,
+                color: 'white',
+                dashArray: '3',
+                fillOpacity: 0.7
+              }
+            }
+          });
+        });
+
+      $timeout(function () {
+        $scope.centerJSON();
+        //console.log($scope.geojson);
+      }, 1400);
+      // $scope.centerJSON();
     };
 
 
-    $scope.findLocation = function (xplace, xcode) {
-      PlaceService.getLocation(xplace, xcode)
-        .then(function (response) {
+  }) // end controller
 
-          $timeout(function () {
-            $scope.center.lat = response.data[0].c_x;
-            $scope.center.lng = response.data[0].c_y;
-            $scope.center.zoom = 22;
-          }, 1600);
-          
+  .controller('ChatsCtrl', function ($scope, $ionicLoading, Chats, RainCurrentWeekService) {
 
+    $scope.loadRainCurrentWeek = function () {
+      $ionicLoading.show({
+        template: '<ion-spinner></ion-spinner> <br/> กำลังโหลดข้อมูล...'
+      });
+      RainCurrentWeekService.loadRainCurrentWeek()
+        .success(function (response) {
+          $scope.rainCurrentWeek = response;
+          //console.log(data);  
+          $ionicLoading.hide();
         })
-      // $scope.init();
+        .error(function (error) {
+          console.error("error");
+        })
     };
 
+    $scope.loadRainCurrentWeek();
+
+    //$scope.chats = Chats.all();
+    $scope.remove = function (chat) {
+      Chats.remove(chat);
+    };
+
+    $scope.getAddress = function (tam, amp, prov) {
+      RainCurrentWeekService.selectedAddress = {
+        tam: tam,
+        amp: amp,
+        prov: prov
+      }
+    }
+
+  })
+
+  .controller('ChatDetailCtrl', function ($scope, $stateParams, $ionicLoading, $http, $timeout, leafletData, ChartService, RainCurrentWeekService, ) {
+
+    //console.log(tamcode);
+    $scope.address = RainCurrentWeekService.selectedAddress;
+
+    // map
+    angular.extend($scope, {
+      center: {
+        //lat: 16.426,
+        //lng: 99.760,
+        //zoom: 7
+      },
+      markers: {
+      },
+      layers: {
+        baselayers: {
+          cycle: {
+            name: 'OpenCycleMap',
+            type: 'xyz',
+            url: 'http://{s}.tile.opencyclemap.org/cycle/{z}/{x}/{y}.png',
+            layerOptions: {
+              subdomains: ['a', 'b', 'c'],
+              attribution: '&copy; <a href="http://www.opencyclemap.org/copyright">OpenCycleMap</a> contributors - &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+              continuousWorld: true
+            }
+          },
+          osm: {
+            name: 'OpenStreetMap',
+            type: 'xyz',
+            url: 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            layerOptions: {
+              subdomains: ['a', 'b', 'c'],
+              attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+              continuousWorld: true
+            }
+          },
+          imagery: {
+            name: "Imagery",
+            type: "agsBase",
+            layer: "Imagery",
+            visible: false
+          }
+        },
+        overlays: {
+          rainwms: {
+            name: 'ปริมาณน้ำฝนรายวัน',
+            type: 'wms',
+            visible: true,
+            url: 'http://map.nu.ac.th/gs-alr2/ows?',
+            layerParams: {
+              layers: 'alrmap:rainsplinegrid',
+              format: 'image/png',
+              transparent: true,
+              zIndex: 2
+            }
+          },
+          province: {
+            name: 'ขอบเขตจังหวัด',
+            type: 'wms',
+            visible: true,
+            url: 'http://map.nu.ac.th/gs-alr2/ows?',
+            layerParams: {
+              layers: 'alr:ln9p_prov',
+              format: 'image/png',
+              transparent: true,
+              zIndex: 3
+            }
+          },
+          amphoe: {
+            name: 'ขอบเขตอำเภอ',
+            type: 'wms',
+            visible: true,
+            url: 'http://map.nu.ac.th/gs-alr2/ows?',
+            layerParams: {
+              layers: 'alr:ln9p_amp',
+              format: 'image/png',
+              transparent: true,
+              zIndex: 4
+            }
+          },
+          tambon: {
+            name: 'ขอบเขตตำบล',
+            type: 'wms',
+            visible: true,
+            url: 'http://map.nu.ac.th/gs-alr2/ows?',
+            layerParams: {
+              layers: 'alr:ln9p_tam',
+              format: 'image/png',
+              transparent: true,
+              zIndex: 5
+            }
+          },
+          village: {
+            name: 'หมู่บ้าน',
+            type: 'wms',
+            visible: false,
+            url: 'http://map.nu.ac.th/gs-alr2/ows?',
+            layerParams: {
+              layers: 'alr:ln9p_vill',
+              format: 'image/png',
+              transparent: true,
+              zIndex: 6
+            }
+          }
+
+        }
+      }
+    });
 
     //update select feature
     $scope.centerJSON = function () {
@@ -326,35 +495,189 @@ angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
         $scope.centerJSON();
         //console.log($scope.geojson);
       }, 1400);
-
       // $scope.centerJSON();
     };
 
+    // get date
+    $scope.ndate = new Date();
 
-  }) // end controller
+    // load rain data
+    $scope.rainNow = [];
+    $scope.rain30y = [];
+    $scope.chartSer = [];
 
-  .controller('ChatsCtrl', function ($scope, Chats) {
-    // With the new view caching in Ionic, Controllers are only called
-    // when they are recreated or on app start, instead of every page change.
-    // To listen for when this page is active (for example, to refresh data),
-    // listen for the $ionicView.enter event:
-    //
-    //$scope.$on('$ionicView.enter', function(e) {
-    //});
+    $scope.loadRain = function (place, code) {
+      // load rain now
+      $ionicLoading.show({
+        template: '<ion-spinner></ion-spinner> <br/> กำลังโหลดข้อมูล...'
+      });
+      ChartService.loadRNow(place, code)
+        .success(function (response) {
+          for (var prop in response[0]) {
+            for (var i = 1; i <= 52; i++) {
+              var w = 'w' + i;
+              if (prop == w) {
 
-    $scope.chats = Chats.all();
-    $scope.remove = function (chat) {
-      Chats.remove(chat);
+                $scope.chartSer.push(prop);
+
+                if (Number(response[0][prop]) >= 0) {
+                  $scope.rainNow.push((Number(response[0][prop])).toFixed(2));
+                  //console.log('ok');
+                } else {
+                  $scope.rainNow.push(null);
+                  //console.log('null')
+                }
+              }
+            }
+          }
+
+          //load map    
+          $scope.featureSelection('alr:ln9p_tam', 'tam_code', $stateParams.chatId);
+   
+          $ionicLoading.hide();
+        })
+        .error(function (error) {
+          console.error("error");
+        });
+
+      ChartService.loadR30y(place, code)
+        .success(function (response) {
+          for (var prop in response[0]) {
+            for (var i = 1; i <= 52; i++) {
+              var w = 'w' + i;
+              if (prop == w) {
+                if (Number(response[0][prop]) >= 0) {
+                  $scope.rain30y.push((Number(response[0][prop])).toFixed(2));
+                  //console.log('ok');
+                } else {
+                  $scope.rain30y.push(null);
+                  //console.log('null')
+                }
+              }
+            }
+          }
+        })
+        .error(function (error) {
+          console.error("error");
+        });
     };
-  })
 
-  .controller('ChatDetailCtrl', function ($scope, $stateParams, Chats) {
-    $scope.chat = Chats.get($stateParams.chatId);
+    $scope.loadRain('tambon', $stateParams.chatId);
+
+    $scope.loadRainCurrent = function (type, tamcode) {
+      RainCurrentWeekService.loadRainCurrent("sum", tamcode)
+        .success(function (response) {
+          $scope.sumRain = response;
+        })
+        .error(function (error) {
+          console.error("error");
+        })
+
+      RainCurrentWeekService.loadRainCurrent("current", tamcode)
+        .success(function (response) {
+          $scope.currentRain = response;
+        })
+        .error(function (error) {
+          console.error("error");
+        })
+    }
+
+    $scope.rainCurrentWeekd = $scope.loadRainCurrent('sum', $stateParams.chatId);
+    //console.log($scope.rainCurrentWeekd);
+
+    //ng-echarts
+    function onClick(params) {
+      console.log(params);
+    };
+    var series1 = "น้ำฝนปัจจุบัน";
+    var series2 = "น้ำฝนเฉลี่ย 10 ปี";
+
+    $scope.lineConfig = {
+      theme: 'default',
+      event: [{ click: onClick }],
+      dataLoaded: true
+    };
+
+    $scope.lineOption = {
+      title: {
+        text: 'น้ำฝน',
+        subtext: 'มม.'
+      },
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow'
+        }
+      },
+      legend: {
+        data: [series1, series2]
+      },
+      toolbox: {
+        show: true,
+        feature: {
+          mark: { show: true },
+          // dataView: { show: true, readOnly: false },
+          magicType: { show: true, type: ['line', 'bar'] },
+          //restore: { show: true },
+          // saveAsImage: { show: true }
+        }
+      },
+      calculable: true,
+      xAxis: [
+        {
+          type: 'category',
+          boundaryGap: false,
+          data: $scope.chartSer,
+        }
+      ],
+      yAxis: [
+        {
+          type: 'value',
+          //axisLabel: {formatter: '{value} °C'}
+        }
+      ],
+      series: [
+        {
+          name: series1,
+          type: 'line',
+          data: $scope.rainNow,  //[11, 11, 15, 13, 12, 13, 10],
+          markPoint: {
+            data: [
+              { type: 'max', name: 'max' },
+              { type: 'min', name: 'min' }
+            ]
+          },
+          markLine: {
+            data: [
+              { type: 'average', name: 'average' }
+            ]
+          }
+        },
+        {
+          name: series2,
+          type: 'line',
+          data: $scope.rain30y, //[1, -2, 2, 5, 3, 2, 0],
+          markPoint: {
+            data: [
+              { name: 'name sr2', value: -2, xAxis: 1, yAxis: -1.5 }
+            ]
+          },
+          markLine: {
+            data: [
+              { type: 'average', name: 'av' }
+            ]
+          }
+        }
+      ]
+    };
+
+    
+
+
   })
 
 
   .controller('StatCtrl', function ($scope, $interval, $timeout, ChartService) {
-
     $scope.settings = {
       enableFriends: true
     };
@@ -410,15 +733,9 @@ angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
         .error(function (error) {
           console.error("error");
         });
-
-      //console.log($scope.rainNow);
-      //console.log($scope.rain30y);
-      //console.log($scope.chartSer);
     };
 
     $scope.loadRain('province', '53');
-
-
 
     //ng-echarts
     function onClick(params) {
@@ -503,41 +820,6 @@ angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
             ]
           }
         }
-
-        // {
-        //   name: '访问来源',
-        //   type: 'pie',
-        //   radius: '55%',
-        //   data: [
-        //     { value: 235, name: '视频广告' },
-        //     { value: 274, name: '联盟广告' },
-        //     { value: 310, name: '邮件营销' },
-        //     { value: 335, name: '直接访问' },
-        //     { value: 400, name: '搜索引擎' }
-        //   ],
-        //   roseType: 'angle',
-        //   label: {
-        //     normal: {
-        //       textStyle: {
-        //         color: 'rgba(255, 255, 255, 0.3)'
-        //       }
-        //     }
-        //   },
-        //   labelLine: {
-        //     normal: {
-        //       lineStyle: {
-        //         color: 'rgba(255, 255, 255, 0.3)'
-        //       }
-        //     }
-        //   },
-        //   itemStyle: {
-        //     normal: {
-        //       color: '#c23531',
-        //       shadowBlur: 200,
-        //       shadowColor: 'rgba(0, 0, 0, 0.5)'
-        //     }
-        //   }
-        // }
       ]
     };
 

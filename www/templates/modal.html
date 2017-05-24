@@ -6,52 +6,29 @@
 
     <ion-content class="padding">
 
-        <!--<div class="list">
-            <label class="item item-input">
-              <span class="input-label">First Name</span>
-              <input ng-model="newUser.firstName" type="text">
-            </label>
-            <label class="item item-input">
-              <span class="input-label">Last Name</span>
-              <input ng-model="newUser.lastName" type="text">
-            </label>
-            <label class="item item-input">
-              <span class="input-label">Email</span>
-              <input ng-model="newUser.email" type="text">
-            </label>
-            <button class="button button-full button-positive" ng-click="createContact(newUser)">Create</button>
-        </div>-->
-
         <div class="padding">
+            <label class="item item-input item-select">
+                <div class = "input-label">จังหวัด:</div>	
+                <select ng-model="dat.prov" ng-options="p.prov_code as p.prov_nam_t for p in province" ng-change="getAmp();"></select>
+            </label>
 
+            <p></p>
+            <label class="item item-input item-select">
+                <div class = "input-label">อำเภอ:</div>	
+                <select ng-model="dat.amp" ng-options="a.amp_code as a.amp_nam_t for a in amphoe" ng-change="getTam();"></select>
+            </label>
 
-            <label class="item item-input item-select">
-   <div class = "input-label">
-      จังหวัด:
-   </div>	
-   <select ng-model="dat.prov" ng-options="p.prov_code as p.prov_nam_t for p in province" ng-change="getAmp();"></select>
-</label>
             <p></p>
             <label class="item item-input item-select">
-   <div class = "input-label">
-      อำเภอ:
-   </div>	
-   <select ng-model="dat.amp" ng-options="a.amp_code as a.amp_nam_t for a in amphoe" ng-change="getTam();"></select>
-</label>
-            <p></p>
+                <div class = "input-label">ตำบล:</div>	
+                <select ng-model="dat.tam" ng-options="t.tam_code as t.tam_nam_t for t in tambon" ng-change="getVill(); modal.hide();"></select>
+            </label>
+
+            <!--<p></p>
             <label class="item item-input item-select">
-   <div class = "input-label">
-      ตำบล:
-   </div>	
-   <select ng-model="dat.tam" ng-options="t.tam_code as t.tam_nam_t for t in tambon" ng-change="getVill();"></select>
-</label>
-            <p></p>
-            <label class="item item-input item-select">
-   <div class = "input-label">
-      หมู่บ้าน:
-   </div>	
-   <select ng-model="dat.vill" ng-options="v.vill_code as v.vill_nam_t for v in village" ng-change="getVillLocation(); modal.hide();"></select>
-</label>
+                <div class = "input-label">หมู่บ้าน:</div>	
+                <select ng-model="dat.vill" ng-options="v.vill_code as v.vill_nam_t for v in village" ng-change="getVillLocation(); modal.hide();"></select>
+            </label>-->
 
             <p></p>
             <div class="button-bar">

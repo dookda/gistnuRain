@@ -1,13 +1,19 @@
-<ion-view view-title="Chats">
+<ion-view view-title='<span class="SemiBold">รายงานน้ำฝน</span>สัปดาห์ปัจจุบัน'>
   <ion-content>
     <ion-list>
-      <ion-item class="item-remove-animate item-avatar item-icon-right" ng-repeat="chat in chats" type="item-text-wrap" href="#/tab/chats/{{chat.id}}">
-        <img ng-src="{{chat.face}}">
-        <h2>{{chat.name}}</h2>
-        <p>{{chat.lastText}}</p>
+      <ion-item class="item-remove-animate item-avatar item-icon-left item-icon-right" 
+          ng-repeat="r in rainCurrentWeek" 
+          type="item-text-wrap" 
+          href="#/tab/chats/{{r.tam_code}}"
+          ng-click="getAddress('{{r.tam_nam_t}}', '{{r.amp_nam_t}}', '{{r.prov_nam_t}}')">
+
+        <!--<img ng-src="{{chat.face}}">-->
+        <i class="icon ion-ios-rainy"></i>
+        <p>{{r.tam_nam_t}} {{r.amp_nam_t}} {{r.prov_nam_t}} </p>
+        <p style="font-size:180%"><span class="SemiBold">{{r.rain | number: 2}} </span>มม.</p>
         <i class="icon ion-chevron-right icon-accessory"></i>
 
-        <ion-option-button class="button-assertive" ng-click="remove(chat)">
+        <ion-option-button class="button-assertive" ng-click="remove(r)">
           Delete
         </ion-option-button>
       </ion-item>

@@ -57,6 +57,20 @@ angular.module('starter.services', [])
   }
 })
 
+.service('RainCurrentWeekService', function($http){
+  return{     
+    selectedAddress:{},
+    loadRainCurrentWeek: function(){
+        var rainCurrentWeek ='http://map.nu.ac.th/rain-api/index.php/rainCurrentWeek';                    
+        return $http.get(rainCurrentWeek);
+    },
+    loadRainCurrent: function(type, tamcode){
+        var rainCurrent ='http://map.nu.ac.th/rain-api/index.php/rainCurrentWeek/'+type+'/'+tamcode;                    
+        return $http.get(rainCurrent);
+    }   
+  } // end return 
+})
+
 .factory('Chats', function() {
   // Might use a resource here that returns a JSON array
 

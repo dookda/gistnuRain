@@ -4,11 +4,31 @@
   The FriendsCtrl pulls data from the Friends service (service.js)
   The Friends service returns an array of friend data
 -->
-<ion-view view-title="{{chat.name}}">
+<ion-view view-title="<span class='SemiBold'>รายละเอียด</span>ปริมาณน้ำฝน">
   <ion-content class="padding">
-    <img ng-src="{{chat.face}}" style="width: 64px; height: 64px">
-    <p>
-      {{chat.lastText}}
-    </p>
+
+    <div class="card padding"><span class='SemiBold'>สถานที่:</span> {{address.tam}} {{address.amp}} {{address.prov}}</div>
+    
+    <div class="row card">
+      <div class="col">
+        <p>น้ำฝนสัปดาห์ที่ {{ ndate | date:'ww'}}</p>
+        <p style="font-size:180%"><span class="SemiBold">{{currentRain[0].rain | number: 2}} </span>มม.</p>
+      </div>
+      <div class="col">
+        <p>ผลรวมปริมาณน้ำฝนที่ผ่านมา </p>
+        <p style="font-size:180%"><span class="SemiBold">{{sumRain[0].rain | number: 2}} </span>มม.</p>
+      </div>
+    </div>
+
+
+    <div class="card">
+      <ng-echarts class="col echarts" ec-config="lineConfig" ec-option="lineOption"></ng-echarts>
+    </div>
+
+    <div class="card">
+      <leaflet lf-center="center" layers="layers" markers="markers" width="100%" height="400px"></leaflet>
+    </div>
+
+
   </ion-content>
 </ion-view>
