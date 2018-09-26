@@ -1,11 +1,13 @@
 <ion-view view-title='<span class="SemiBold">รายงานน้ำฝน</span>สัปดาห์ปัจจุบัน'>
+  <ion-header-bar class="bar-light bar-subheader">
+    <input type="search" placeholder="ค้นหา..." ng-model="search">
+    <button ng-if="search.length" class="button button-icon ion-android-close input-button" ng-click="clearSearch()">
+    </button>
+  </ion-header-bar>
   <ion-content>
     <ion-list>
-      <ion-item class="item-remove-animate item-avatar item-icon-left item-icon-right" 
-          ng-repeat="r in rainCurrentWeek" 
-          type="item-text-wrap" 
-          href="#/tab/chats/{{r.tam_code}}"
-          ng-click="getAddress('{{r.tam_nam_t}}', '{{r.amp_nam_t}}', '{{r.prov_nam_t}}')">
+      <ion-item class="item-remove-animate item-avatar item-icon-left item-icon-right" ng-repeat="r in rainCurrentWeek | searchTam:search"
+        type="item-text-wrap" href="#/tab/chats/{{r.tam_code}}" ng-click="getAddress('{{r.tam_nam_t}}', '{{r.amp_nam_t}}', '{{r.prov_nam_t}}')">
 
         <!--<img ng-src="{{chat.face}}">-->
         <i class="icon ion-ios-rainy"></i>

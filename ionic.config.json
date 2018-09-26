@@ -1,4 +1,13 @@
 {
   "name": "rain",
-  "app_id": "1667d38e"
+  "integrations": {
+    "cordova": {}
+  },
+  "pro_id": "1667d38e",
+  "watchPatterns": [
+    "scss/**/*",
+    "www/**/*",
+    "!www/lib/**/*",
+    "!www/**/*.map"
+  ]
 }

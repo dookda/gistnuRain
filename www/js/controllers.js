@@ -18,10 +18,10 @@ angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
           cycle: {
             name: 'OpenCycleMap',
             type: 'xyz',
-            url: 'http://{s}.tile.opencyclemap.org/cycle/{z}/{x}/{y}.png',
+            url: 'http://{s}.google.com/vt/lyrs=r&x={x}&y={y}&z={z}',
             layerOptions: {
-              subdomains: ['a', 'b', 'c'],
-              attribution: '&copy; <a href="http://www.opencyclemap.org/copyright">OpenCycleMap</a> contributors - &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+              subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+              // attribution: '&copy; <a href="http://www.opencyclemap.org/copyright">OpenCycleMap</a> contributors - &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
               continuousWorld: true
             }
           },
@@ -182,8 +182,8 @@ angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
           $scope.markers.now = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
-            message: "You Are Here",
-            focus: true,
+            message: "คุณอยู่ที่นี่",
+            focus: false,
             draggable: true
           };
 
@@ -201,12 +201,15 @@ angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
     }).then(function (modal) {
       $scope.modal = modal;
     });
+
     $scope.openModal = function () {
       $scope.modal.show();
     };
+
     $scope.closeModal = function () {
       $scope.modal.hide();
     };
+
     $scope.$on('$destroy', function () {
       $scope.modal.remove();
     });
@@ -236,7 +239,6 @@ angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
           $scope.village = [];
           $scope.featureSelection('alr:ln9p_prov', 'prov_code', $scope.dat.prov);
         });
-      // $scope.findLocation("province", $scope.dat.prov);
     };
 
     $scope.getTam = function () {
@@ -246,7 +248,6 @@ angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
           $scope.village = [];
           $scope.featureSelection('alr:ln9p_amp', 'amp_code', $scope.dat.amp);
         });
-      // $scope.findLocation("amphoe", $scope.dat.amp);
     };
 
     $scope.getVill = function () {
@@ -255,7 +256,6 @@ angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
           $scope.village = response.data;
           $scope.featureSelection('alr:ln9p_tam', 'tam_code', $scope.dat.tam);
         })
-      // $scope.findLocation("tambon", $scope.dat.tam);
     };
 
     //update select feature
@@ -277,11 +277,11 @@ angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
 
     $scope.featureSelection = function (layer, field, code) {
       $http.get('http://map.nu.ac.th/gs-alr2/ows?' +
-        'service=WFS&version=1.0.0' +
-        '&request=GetFeature' +
-        '&typeName=' + layer +
-        '&CQL_FILTER=' + field + '=%27' + code + '%27' +
-        '&outputFormat=application%2Fjson')
+          'service=WFS&version=1.0.0' +
+          '&request=GetFeature' +
+          '&typeName=' + layer +
+          '&CQL_FILTER=' + field + '=%27' + code + '%27' +
+          '&outputFormat=application%2Fjson')
         .then(function (data, status) {
           angular.extend($scope, {
             geojson: {
@@ -340,7 +340,30 @@ angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
       }
     }
 
+    $scope.clearSearch = function () {
+      $scope.search = '';
+    };
+
   })
+  .filter('searchTam', function () {
+    return function (items, query) {
+      var filtered = [];
+      var letterMatch = new RegExp(query, 'i');
+      for (var i = 0; i < items.length; i++) {
+        var item = items[i];
+        if (query) {
+          if (letterMatch.test(item.tam_nam_t.substring(0, query.length))) {
+            filtered.push(item);
+          }
+        } else {
+          filtered.push(item);
+        }
+      }
+      return filtered;
+    };
+  })
+
+
 
   .controller('ChatDetailCtrl', function ($scope, $stateParams, $ionicLoading, $http, $timeout, leafletData, ChartService, RainCurrentWeekService, ) {
 
@@ -354,8 +377,7 @@ angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
         //lng: 99.760,
         //zoom: 7
       },
-      markers: {
-      },
+      markers: {},
       layers: {
         baselayers: {
           cycle: {
@@ -470,11 +492,11 @@ angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
 
     $scope.featureSelection = function (layer, field, code) {
       $http.get('http://map.nu.ac.th/gs-alr2/ows?' +
-        'service=WFS&version=1.0.0' +
-        '&request=GetFeature' +
-        '&typeName=' + layer +
-        '&CQL_FILTER=' + field + '=%27' + code + '%27' +
-        '&outputFormat=application%2Fjson')
+          'service=WFS&version=1.0.0' +
+          '&request=GetFeature' +
+          '&typeName=' + layer +
+          '&CQL_FILTER=' + field + '=%27' + code + '%27' +
+          '&outputFormat=application%2Fjson')
         .then(function (data, status) {
           angular.extend($scope, {
             geojson: {
@@ -533,7 +555,7 @@ angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
 
           //load map    
           $scope.featureSelection('alr:ln9p_tam', 'tam_code', $stateParams.chatId);
-   
+
           $ionicLoading.hide();
         })
         .error(function (error) {
@@ -594,7 +616,9 @@ angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
 
     $scope.lineConfig = {
       theme: 'default',
-      event: [{ click: onClick }],
+      event: [{
+        click: onClick
+      }],
       dataLoaded: true
     };
 
@@ -615,42 +639,48 @@ angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
       toolbox: {
         show: true,
         feature: {
-          mark: { show: true },
+          mark: {
+            show: true
+          },
           // dataView: { show: true, readOnly: false },
-          magicType: { show: true, type: ['line', 'bar'] },
+          magicType: {
+            show: true,
+            type: ['line', 'bar']
+          },
           //restore: { show: true },
           // saveAsImage: { show: true }
         }
       },
       calculable: true,
-      xAxis: [
-        {
-          type: 'category',
-          boundaryGap: false,
-          data: $scope.chartSer,
-        }
-      ],
-      yAxis: [
-        {
-          type: 'value',
-          //axisLabel: {formatter: '{value} °C'}
-        }
-      ],
-      series: [
-        {
+      xAxis: [{
+        type: 'category',
+        boundaryGap: false,
+        data: $scope.chartSer,
+      }],
+      yAxis: [{
+        type: 'value',
+        //axisLabel: {formatter: '{value} °C'}
+      }],
+      series: [{
           name: series1,
           type: 'line',
-          data: $scope.rainNow,  //[11, 11, 15, 13, 12, 13, 10],
+          data: $scope.rainNow, //[11, 11, 15, 13, 12, 13, 10],
           markPoint: {
-            data: [
-              { type: 'max', name: 'max' },
-              { type: 'min', name: 'min' }
+            data: [{
+                type: 'max',
+                name: 'max'
+              },
+              {
+                type: 'min',
+                name: 'min'
+              }
             ]
           },
           markLine: {
-            data: [
-              { type: 'average', name: 'average' }
-            ]
+            data: [{
+              type: 'average',
+              name: 'average'
+            }]
           }
         },
         {
@@ -658,21 +688,22 @@ angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
           type: 'line',
           data: $scope.rain30y, //[1, -2, 2, 5, 3, 2, 0],
           markPoint: {
-            data: [
-              { name: 'name sr2', value: -2, xAxis: 1, yAxis: -1.5 }
-            ]
+            data: [{
+              name: 'name sr2',
+              value: -2,
+              xAxis: 1,
+              yAxis: -1.5
+            }]
           },
           markLine: {
-            data: [
-              { type: 'average', name: 'av' }
-            ]
+            data: [{
+              type: 'average',
+              name: 'av'
+            }]
           }
         }
       ]
     };
-
-    
-
 
   })
 
@@ -744,7 +775,9 @@ angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
 
     $scope.lineConfig = {
       theme: 'default',
-      event: [{ click: onClick }],
+      event: [{
+        click: onClick
+      }],
       dataLoaded: true
     };
 
@@ -765,44 +798,52 @@ angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
       toolbox: {
         show: true,
         feature: {
-          mark: { show: true },
+          mark: {
+            show: true
+          },
           // dataView: { show: true, readOnly: false },
-          magicType: { show: true, type: ['line', 'bar'] },
-          restore: { show: true },
+          magicType: {
+            show: true,
+            type: ['line', 'bar']
+          },
+          restore: {
+            show: true
+          },
           // saveAsImage: { show: true }
         }
       },
       calculable: true,
-      xAxis: [
-        {
-          type: 'category',
-          boundaryGap: false,
-          data: $scope.chartSer, //['A', 'B', 'C', 'D', 'E', 'F', 'G']
+      xAxis: [{
+        type: 'category',
+        boundaryGap: false,
+        data: $scope.chartSer, //['A', 'B', 'C', 'D', 'E', 'F', 'G']
+      }],
+      yAxis: [{
+        type: 'value',
+        axisLabel: {
+          //formatter: '{value} °C'
         }
-      ],
-      yAxis: [
-        {
-          type: 'value',
-          axisLabel: {
-            //formatter: '{value} °C'
-          }
-        }
-      ],
-      series: [
-        {
+      }],
+      series: [{
           name: 'series1',
           type: 'line',
-          data: $scope.rainNow,  //[11, 11, 15, 13, 12, 13, 10],
+          data: $scope.rainNow, //[11, 11, 15, 13, 12, 13, 10],
           markPoint: {
-            data: [
-              { type: 'max', name: 'max' },
-              { type: 'min', name: 'min' }
+            data: [{
+                type: 'max',
+                name: 'max'
+              },
+              {
+                type: 'min',
+                name: 'min'
+              }
             ]
           },
           markLine: {
-            data: [
-              { type: 'average', name: 'average' }
-            ]
+            data: [{
+              type: 'average',
+              name: 'average'
+            }]
           }
         },
         {
@@ -810,14 +851,18 @@ angular.module('starter.controllers', ['ui-leaflet', 'ngCordova', 'ng-echarts'])
           type: 'line',
           data: $scope.rain30y, //[1, -2, 2, 5, 3, 2, 0],
           markPoint: {
-            data: [
-              { name: 'name sr2', value: -2, xAxis: 1, yAxis: -1.5 }
-            ]
+            data: [{
+              name: 'name sr2',
+              value: -2,
+              xAxis: 1,
+              yAxis: -1.5
+            }]
           },
           markLine: {
-            data: [
-              { type: 'average', name: 'av' }
-            ]
+            data: [{
+              type: 'average',
+              name: 'av'
+            }]
           }
         }
       ]

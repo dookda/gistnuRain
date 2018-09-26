@@ -26,13 +26,10 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'])
         console.log('notificationOpenedCallback: ' + JSON.stringify(jsonData));
       };
 
-      window.plugins.OneSignal
-        .startInit("31d70cb7-1798-4f70-8ed5-eca22cd910e1")
-        .handleNotificationOpened(notificationOpenedCallback)
-        .endInit();
-
-
-
+      // window.plugins.OneSignal
+      //   .startInit("31d70cb7-1798-4f70-8ed5-eca22cd910e1")
+      //   .handleNotificationOpened(notificationOpenedCallback)
+      //   .endInit();
 
     });
   })
